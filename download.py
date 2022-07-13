@@ -9,7 +9,7 @@ def get_argparser():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-l", "--link", type=str, required=True, help="The share link")
     parser.add_argument("-p", "--password", type=str, required=True, help="The password (case-sensitive)")
-    parser.add_argument("--output_path", type=str, default="./", help="The path where you want to save your file")
+    parser.add_argument("--output_path", type=str, default="./output", help="The path where you want to save your file")
     parser.add_argument("-r", "--rename", type=str, default="", help="The filename you want to use. The original filename is used by default.")
     return parser
 
