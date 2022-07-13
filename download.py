@@ -3,6 +3,7 @@ import json
 import argparse
 import os
 from lxml import etree
+from tqdm import tqdm
 from urllib.parse import unquote
 
 def get_argparser():
@@ -21,7 +22,7 @@ def check_password(link, password):
     elements = elements[1].split("&")
     for e in elements:
         pair = e.split("=")
-        data[pair[0]]=pair[1]
+        data[pair[0]] = pair[1]
     data["password"] = password
     check = requests.post(check_url, data=json.dumps(data))
     return check.status_code == 200
@@ -34,7 +35,7 @@ if __name__ == '__main__':
     args.link = unquote(args.link)
     if check_password(args.link, args.password):
         url = args.link + "&func=nf:downloadFile&password=" + args.password
-        response = requests.post(url)
+        response = requests.post(url, stream=True)
         if response.status_code == 200:
             if args.rename != "":
                 filename = args.rename
@@ -43,14 +44,20 @@ if __name__ == '__main__':
                 html = etree.HTML(requests.get(args.link).text)
                 filename = html.xpath('/html/body/div[2]/div[2]/div[1]/h4/text()')
                 filename = filename[0]
-            filename = os.path.join(os.path.abspath(args.output_path), filename)
+            dst = os.path.join(args.output_path, filename)
             if not os.path.exists(args.output_path):
                 os.makedirs(args.output_path)
-            with open(filename, "wb") as f:
-                f.write(response.content)
-            print(f"File saved to \"{filename}\"")
+            file_size = int(response.headers["content-length"])
+            progress_bar = tqdm(total=file_size, unit='B', unit_scale=True, desc=filename)
+            with open(dst, "wb") as f:
+                for chunk in response.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+                        progress_bar.update(1024)
+            progress_bar.close()
+            print(f"File saved to \"{dst}\"")
         else:
-            print("Download UNSUCCESSFULLY!")
+            print("ERROR: Download UNSUCCESSFULLY!")
     else:
-        print("Incorrect password!")
+        print("ERROR: Incorrect password!")
 
