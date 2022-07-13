@@ -3,6 +3,7 @@ import json
 import argparse
 import os
 from lxml import etree
+from urllib.parse import unquote
 
 def get_argparser():
     description = "Downloader for BJTU-Netdisk"
@@ -30,6 +31,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.link[-1] == '/' or args.link[-1] == '\\':
         args.link = args.link[:-1]
+    args.link = unquote(args.link)
     if check_password(args.link, args.password):
         url = args.link + "&func=nf:downloadFile&password=" + args.password
         response = requests.post(url)
